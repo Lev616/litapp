@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { IonicPage, NavParams, ViewController } from 'ionic-angular';
 import { Categories, Globals } from '../../providers/providers';
 import { Category } from '../../models/category';
+import { DEFAULT_STORY_FILTER } from '../../app/story-filter';
 
 @IonicPage()
 @Component({
@@ -105,6 +106,46 @@ import { Category } from '../../models/category';
       </ion-row>
     </ion-grid>
 
+    <ion-list-header>{{ 'SEARCH_EXTRAFILTERS' | translate }}</ion-list-header>
+    <ion-item>
+      <ion-label>{{ 'FILTER_MINRATING' | translate }}</ion-label>
+      <ion-select [(ngModel)]="filters.minRating">
+        <ion-option [value]="0">{{ 'SEARCH_ANYCAT' | translate }}</ion-option>
+        <ion-option [value]="3.5">3.5+</ion-option>
+        <ion-option [value]="4">4.0+</ion-option>
+        <ion-option [value]="4.25">4.25+</ion-option>
+        <ion-option [value]="4.5">4.5+</ion-option>
+      </ion-select>
+    </ion-item>
+    <ion-item>
+      <ion-label>{{ 'FILTER_MINVIEWS' | translate }}</ion-label>
+      <ion-select [(ngModel)]="filters.minViews">
+        <ion-option [value]="0">{{ 'SEARCH_ANYCAT' | translate }}</ion-option>
+        <ion-option [value]="1000">1K+</ion-option>
+        <ion-option [value]="10000">10K+</ion-option>
+        <ion-option [value]="50000">50K+</ion-option>
+        <ion-option [value]="100000">100K+</ion-option>
+        <ion-option [value]="500000">500K+</ion-option>
+      </ion-select>
+    </ion-item>
+    <ion-item>
+      <ion-checkbox [(ngModel)]="filters.hideRead"></ion-checkbox>
+      <ion-label>{{ 'FILTER_HIDEREAD' | translate }}</ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-checkbox [(ngModel)]="filters.hideDownloaded"></ion-checkbox>
+      <ion-label>{{ 'FILTER_HIDEDOWNLOADED' | translate }}</ion-label>
+    </ion-item>
+    <ion-item>
+      <ion-label stacked>{{ 'FILTER_EXCLUDEWORDS' | translate }}</ion-label>
+      <ion-input type="text" [(ngModel)]="filters.excludeWords" placeholder="word, another word"></ion-input>
+    </ion-item>
+    <ion-item>
+      <ion-label stacked>{{ 'FILTER_EXCLUDEAUTHORS' | translate }}</ion-label>
+      <ion-input type="text" [(ngModel)]="filters.excludeAuthors" placeholder="author, another author"></ion-input>
+    </ion-item>
+    <button ion-button clear small (click)="resetFilters()">{{ 'FILTER_RESET' | translate }}</button>
+
     <button ion-button (click)="save()">{{ 'SEARCH' | translate }}</button>
   `,
   styles: [
@@ -181,11 +222,13 @@ import { Category } from '../../models/category';
 })
 export class SearchPopover {
   options;
+  filters;
   categories;
   languages;
 
   constructor(navParams: NavParams, private viewCtrl: ViewController, public c: Categories, private globals: Globals) {
     this.options = navParams.get('options');
+    this.filters = navParams.get('filters');
     this.c.getAllSorted().subscribe((cats: Category[]) => {
       this.categories = cats;
     });
@@ -196,6 +239,10 @@ export class SearchPopover {
 
   save() {
     this.viewCtrl.dismiss(true);
+  }
+
+  resetFilters() {
+    Object.assign(this.filters, DEFAULT_STORY_FILTER);
   }
 
   changeDefaultSort() {
