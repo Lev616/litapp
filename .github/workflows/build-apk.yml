@@ -23,9 +23,11 @@ jobs:
           java-version: '17'
 
       - uses: android-actions/setup-android@v3
+        with:
+          packages: '' # default 'tools' package no longer exists; we install what we need below
 
       - name: Android SDK packages
-        run: sdkmanager "platforms;android-27" "build-tools;27.0.3"
+        run: sdkmanager "platform-tools" "platforms;android-27" "build-tools;27.0.3"
 
       # cordova-android 7.1.4 needs Java 8 and an old Gradle for the real build
       - uses: actions/setup-java@v4
