@@ -25,8 +25,12 @@ const splitList = (s: string): string[] =>
     .map(x => x.trim())
     .filter(x => x.length > 0);
 
-export const isFilterActive = (f: StoryFilter): boolean =>
-  !!f && (f.minRating > 0 || f.minViews > 0 || f.hideRead || f.hideDownloaded || splitList(f.excludeWords).length > 0 || splitList(f.excludeAuthors).length > 0);
+export const isFilterActive = (f: StoryFilter): boolean => {
+  if (!f) return false;
+  const hasWords = splitList(f.excludeWords).length > 0;
+  const hasAuthors = splitList(f.excludeAuthors).length > 0;
+  return f.minRating > 0 || f.minViews > 0 || f.hideRead || f.hideDownloaded || hasWords || hasAuthors;
+};
 
 /**
  * Client-side filtering of an already fetched page of stories.
