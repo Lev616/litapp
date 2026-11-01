@@ -47,10 +47,44 @@ jobs:
           npm rebuild node-sass
           node setup.js
 
-      - name: Build
+      - name: Pin cordova-plugin-device
+        # ^2.0.2 resolves to 2.1.0, which cordova CLI 8 cannot install (cordova-electron engine)
         run: |
-          ionic cordova platform add android --no-interactive || true
-          ionic cordova build android --debug --no-interactive -- -- --minSdkVersion=19
+          sed -i 's#"cordova-plugin-device" spec="^2.0.2"#"cordova-plugin-device" spec="2.0.3"#' config.xml
+          sed -i 's#"cordova-plugin-device": "^2.0.2"#"cordova-plugin-device": "2.0.3"#' package.json
+
+      - name: Add Android platform
+        run: ionic cordova platform add android --no-interactive
+
+      - name: Patch CordovaLib (JCenter/Bintray are gone)
+        # cordova-android 7.1.4 needs the bintray + dcendents publishing plugins, which can no
+        # longer be downloaded. They are only used for publishing, so strip them out.
+        run: |
+          python3 - <<'PY'
+          import re
+          p = 'platforms/android/CordovaLib/build.gradle'
+          s = open(p).read()
+          s = re.sub(r"^\s*classpath 'com\.github\.dcendents:[^']*'\n", "", s, flags=re.M)
+          s = re.sub(r"^\s*classpath 'com\.jfrog\.bintray\.gradle:[^']*'\n", "", s, flags=re.M)
+          s = re.sub(r"^apply plugin: 'com\.github\.dcendents\.android-maven'\n", "", s, flags=re.M)
+          s = re.sub(r"^apply plugin: 'com\.jfrog\.bintray'\n", "", s, flags=re.M)
+          def drop(text, header):
+              m = re.search(r"^" + re.escape(header) + r"\s*\{", text, flags=re.M)
+              if not m:
+                  return text
+              i, depth = m.end(), 1
+              while depth and i < len(text):
+                  depth += {'{': 1, '}': -1}.get(text[i], 0)
+                  i += 1
+              return text[:m.start()] + text[i:]
+          s = drop(s, 'install')
+          s = drop(s, 'bintray')
+          open(p, 'w').write(s)
+          PY
+          grep -c "bintray" platforms/android/CordovaLib/build.gradle || true
+
+      - name: Build
+        run: ionic cordova build android --debug --no-interactive -- -- --minSdkVersion=19
 
       - uses: actions/upload-artifact@v4
         with:
