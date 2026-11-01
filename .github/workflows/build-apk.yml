@@ -16,20 +16,26 @@ jobs:
         with:
           node-version: '12'
 
-      # cordova-android 7.1.4 needs Java 8 and an old Gradle
+      # sdkmanager needs JDK 17+, so install the SDK packages first under 17
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Android SDK packages
+        run: sdkmanager "platforms;android-27" "build-tools;27.0.3"
+
+      # cordova-android 7.1.4 needs Java 8 and an old Gradle for the real build
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '8'
 
-      - uses: android-actions/setup-android@v3
-
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '4.10.3'
-
-      - name: Android SDK packages
-        run: sdkmanager "platforms;android-27" "build-tools;27.0.3"
 
       - name: Install tools and deps
         # package-lock.json is out of sync, so use install instead of ci
