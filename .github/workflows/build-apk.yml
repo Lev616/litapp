@@ -1,0 +1,50 @@
+name: Build debug APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+jobs:
+  apk:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      # node-sass 4 only builds on old Node versions
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '12'
+
+      # cordova-android 7.1.4 needs Java 8 and an old Gradle
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '4.10.3'
+
+      - name: Android SDK packages
+        run: sdkmanager "platforms;android-27" "build-tools;27.0.3"
+
+      - name: Install tools and deps
+        # package-lock.json is out of sync, so use install instead of ci
+        run: |
+          npm install -g ionic@3.9.2 cordova@8.1.2
+          npm install --legacy-peer-deps
+          npm rebuild node-sass
+          node setup.js
+
+      - name: Build
+        run: |
+          ionic cordova platform add android --no-interactive || true
+          ionic cordova build android --debug --no-interactive -- -- --minSdkVersion=19
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: litapp-debug-apk
+          path: platforms/android/app/build/outputs/apk/debug/*.apk
