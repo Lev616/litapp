@@ -39,6 +39,13 @@ jobs:
         with:
           gradle-version: '4.10.3'
 
+      - name: Pin cordova-plugin-device
+        # ^2.0.2 resolves to 2.1.0, which cordova CLI 8 cannot install (cordova-electron engine).
+        # Must run BEFORE npm install so node_modules matches package.json.
+        run: |
+          sed -i 's#"cordova-plugin-device" spec="^2.0.2"#"cordova-plugin-device" spec="2.0.3"#' config.xml
+          sed -i 's#"cordova-plugin-device": "^2.0.2"#"cordova-plugin-device": "2.0.3"#' package.json
+
       - name: Install tools and deps
         # package-lock.json is out of sync, so use install instead of ci
         run: |
@@ -46,12 +53,6 @@ jobs:
           npm install --legacy-peer-deps
           npm rebuild node-sass
           node setup.js
-
-      - name: Pin cordova-plugin-device
-        # ^2.0.2 resolves to 2.1.0, which cordova CLI 8 cannot install (cordova-electron engine)
-        run: |
-          sed -i 's#"cordova-plugin-device" spec="^2.0.2"#"cordova-plugin-device" spec="2.0.3"#' config.xml
-          sed -i 's#"cordova-plugin-device": "^2.0.2"#"cordova-plugin-device": "2.0.3"#' package.json
 
       - name: Add Android platform
         run: ionic cordova platform add android --no-interactive
